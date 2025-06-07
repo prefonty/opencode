@@ -1,8 +1,84 @@
 {
   "$schema": "./opencode-schema.json",
+  "data": {
+    "directory": ".opencode"
+  },
+  "providers": {
+    "openai": {
+      "disabled": false
+    },
+    "anthropic": {
+      "disabled": false
+    },
+    "openrouter": {
+      "disabled": false
+    },
+    "gemini": {
+      "disabled": false
+    }
+  },
+  "agents": {
+    "coder": {
+      "model": "gpt-4o",
+      "maxTokens": 5000
+    },
+    "task": {
+      "model": "claude-3.7-sonnet",
+      "maxTokens": 5000
+    },
+    "title": {
+      "model": "openrouter.claude-3.5-haiku",
+      "maxTokens": 80
+    }
+  },
   "lsp": {
     "gopls": {
       "command": "gopls"
     }
-  }
+  },
+  "models": {
+    "openai": [
+      "o3",
+      "o1-pro",
+      "o1-mini",
+      "o1",
+      "gpt-4o-mini",
+      "gpt-4o",
+      "gpt-4.5-preview",
+      "gpt-4.1-nano",
+      "gpt-4.1-mini",
+      "gpt-4.1",
+      "o3-mini",
+      "o4-mini"
+    ],
+    "anthropic": [
+      "claude-3.7-sonnet",
+      "claude-3.5-sonnet",
+      "claude-3.5-haiku",
+      "claude-3-haiku",
+      "claude-3-opus"
+    ],
+    "openrouter": [
+      "qwen/qwen3-235b-a22b",
+      "qwen/qwen3-32b",
+      "qwen/qwen3-14b",
+      "qwen/qwen3-8b",
+      "qwen/qwen3-30b-a3b",
+      "meta-llama/llama-3.1-405b-instruct",
+      "meta-llama/llama-3.1-70b-instruct",
+      "meta-llama/llama-3.1-8b-instruct",
+      "mistralai/mistral-large-2407",
+      "mistralai/mistral-medium-2407"
+    ],
+    "gemini": [
+      "gemini-2.5-pro-preview-03-25",
+      "gemini-2.5-flash-preview-04-17",
+      "gemini-2.0-flash",
+      "gemini-2.0-flash-lite",
+      "gemini-1.5-pro",
+      "gemini-1.5-flash"
+    ]
+  },
+  "debug": false,
+  "debugLSP": false
 }

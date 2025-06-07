@@ -121,15 +121,18 @@ func Load(workingDir string, debug bool) (*Config, error) {
 
 	configureViper()
 	setDefaults(debug)
-	setProviderDefaults()
 
-	// Read global config
+	// Read global config first
 	if err := readConfig(viper.ReadInConfig()); err != nil {
 		return cfg, err
 	}
 
 	// Load and merge local config
 	mergeLocalConfig(workingDir)
+
+	// Set provider defaults AFTER loading config files
+	// This ensures that user-specified values in config files take precedence
+	setProviderDefaults()
 
 	// Apply configuration to the struct
 	if err := viper.Unmarshal(cfg); err != nil {
@@ -232,68 +235,101 @@ func setProviderDefaults() {
 		viper.SetDefault("providers.openrouter.apiKey", apiKey)
 	}
 
-	// Use this order to set the default models
-	// 1. Anthropic
-	// 2. OpenAI
-	// 3. Google Gemini
-	// 4. Groq
-	// 5. AWS Bedrock
+	// Set default models based on available API keys
+	// We'll set defaults for all available providers, but user config will take precedence
+
 	// Anthropic configuration
 	if apiKey := os.Getenv("ANTHROPIC_API_KEY"); apiKey != "" {
 		viper.SetDefault("agents.coder.model", models.Claude37Sonnet)
 		viper.SetDefault("agents.task.model", models.Claude37Sonnet)
 		viper.SetDefault("agents.title.model", models.Claude37Sonnet)
-		return
 	}
 
 	// OpenAI configuration
 	if apiKey := os.Getenv("OPENAI_API_KEY"); apiKey != "" {
-		viper.SetDefault("agents.coder.model", models.GPT41)
-		viper.SetDefault("agents.task.model", models.GPT41Mini)
-		viper.SetDefault("agents.title.model", models.GPT41Mini)
-		return
+		// Only set these if they haven't been set by a higher priority provider
+		if viper.GetString("agents.coder.model") == "" {
+			viper.SetDefault("agents.coder.model", models.GPT41)
+		}
+		if viper.GetString("agents.task.model") == "" {
+			viper.SetDefault("agents.task.model", models.GPT41Mini)
+		}
+		if viper.GetString("agents.title.model") == "" {
+			viper.SetDefault("agents.title.model", models.GPT41Mini)
+		}
 	}
 
 	// Google Gemini configuration
 	if apiKey := os.Getenv("GEMINI_API_KEY"); apiKey != "" {
-		viper.SetDefault("agents.coder.model", models.Gemini25)
-		viper.SetDefault("agents.task.model", models.Gemini25Flash)
-		viper.SetDefault("agents.title.model", models.Gemini25Flash)
-		return
+		// Only set these if they haven't been set by a higher priority provider
+		if viper.GetString("agents.coder.model") == "" {
+			viper.SetDefault("agents.coder.model", models.Gemini25)
+		}
+		if viper.GetString("agents.task.model") == "" {
+			viper.SetDefault("agents.task.model", models.Gemini25Flash)
+		}
+		if viper.GetString("agents.title.model") == "" {
+			viper.SetDefault("agents.title.model", models.Gemini25Flash)
+		}
 	}
 
 	// Groq configuration
 	if apiKey := os.Getenv("GROQ_API_KEY"); apiKey != "" {
-		viper.SetDefault("agents.coder.model", models.QWENQwq)
-		viper.SetDefault("agents.task.model", models.QWENQwq)
-		viper.SetDefault("agents.title.model", models.QWENQwq)
-		return
+		// Only set these if they haven't been set by a higher priority provider
+		if viper.GetString("agents.coder.model") == "" {
+			viper.SetDefault("agents.coder.model", models.QWENQwq)
+		}
+		if viper.GetString("agents.task.model") == "" {
+			viper.SetDefault("agents.task.model", models.QWENQwq)
+		}
+		if viper.GetString("agents.title.model") == "" {
+			viper.SetDefault("agents.title.model", models.QWENQwq)
+		}
 	}
 
 	// OpenRouter configuration
 	if apiKey := os.Getenv("OPENROUTER_API_KEY"); apiKey != "" {
-		viper.SetDefault("providers.openrouter.apiKey", apiKey)
-		viper.SetDefault("agents.coder.model", models.OpenRouterClaude37Sonnet)
-		viper.SetDefault("agents.task.model", models.OpenRouterClaude37Sonnet)
-		viper.SetDefault("agents.title.model", models.OpenRouterClaude35Haiku)
-		return
+		// Only set these if they haven't been set by a higher priority provider
+		if viper.GetString("agents.coder.model") == "" {
+			viper.SetDefault("agents.coder.model", models.OpenRouterClaude37Sonnet)
+		}
+		if viper.GetString("agents.task.model") == "" {
+			viper.SetDefault("agents.task.model", models.OpenRouterClaude37Sonnet)
+		}
+		if viper.GetString("agents.title.model") == "" {
+			viper.SetDefault("agents.title.model", models.OpenRouterClaude35Haiku)
+		}
 	}
 
 	// AWS Bedrock configuration
 	if hasAWSCredentials() {
-		viper.SetDefault("agents.coder.model", models.BedrockClaude37Sonnet)
-		viper.SetDefault("agents.task.model", models.BedrockClaude37Sonnet)
-		viper.SetDefault("agents.title.model", models.BedrockClaude37Sonnet)
-		return
+		// Only set these if they haven't been set by a higher priority provider
+		if viper.GetString("agents.coder.model") == "" {
+			viper.SetDefault("agents.coder.model", models.BedrockClaude37Sonnet)
+		}
+		if viper.GetString("agents.task.model") == "" {
+			viper.SetDefault("agents.task.model", models.BedrockClaude37Sonnet)
+		}
+		if viper.GetString("agents.title.model") == "" {
+			viper.SetDefault("agents.title.model", models.BedrockClaude37Sonnet)
+		}
 	}
 
+	// Azure OpenAI configuration
 	if os.Getenv("AZURE_OPENAI_ENDPOINT") != "" {
 		// api-key may be empty when using Entra ID credentials – that's okay
 		viper.SetDefault("providers.azure.apiKey", os.Getenv("AZURE_OPENAI_API_KEY"))
-		viper.SetDefault("agents.coder.model", models.AzureGPT41)
-		viper.SetDefault("agents.task.model", models.AzureGPT41Mini)
-		viper.SetDefault("agents.title.model", models.AzureGPT41Mini)
-		return
+
+		// Only set these if they haven't been set by a higher priority provider
+		if viper.GetString("agents.coder.model") == "" {
+			viper.SetDefault("agents.coder.model", models.AzureGPT41)
+		}
+		if viper.GetString("agents.task.model") == "" {
+			viper.SetDefault("agents.task.model", models.AzureGPT41Mini)
+		}
+		if viper.GetString("agents.title.model") == "" {
+			viper.SetDefault("agents.title.model", models.AzureGPT41Mini)
+		}
 	}
 }
 
@@ -387,16 +423,22 @@ func validateAgent(cfg *Config, name AgentName, agent Agent) error {
 		// Provider not configured, check if we have environment variables
 		apiKey := getProviderAPIKey(provider)
 		if apiKey == "" {
-			logging.Warn("provider not configured for model, reverting to default",
+			logging.Warn("provider not configured for model, checking for alternatives",
 				"agent", name,
 				"model", agent.Model,
 				"provider", provider)
 
-			// Set default model based on available providers
+			// Only revert to default if we can't find a valid provider
+			// This allows users to specify models in .opencode.json even if they don't have the API key
+			// The application will try to use the model when the API key becomes available
 			if setDefaultModelForAgent(name) {
 				logging.Info("set default model for agent", "agent", name, "model", cfg.Agents[name].Model)
 			} else {
-				return fmt.Errorf("no valid provider available for agent %s", name)
+				logging.Warn("no valid provider available, but keeping configured model",
+					"agent", name,
+					"model", agent.Model)
+				// Don't return an error, just keep the configured model
+				// The application will fail gracefully when trying to use the model
 			}
 		} else {
 			// Add provider with API key from environment
@@ -407,16 +449,28 @@ func validateAgent(cfg *Config, name AgentName, agent Agent) error {
 		}
 	} else if providerCfg.Disabled || providerCfg.APIKey == "" {
 		// Provider is disabled or has no API key
-		logging.Warn("provider is disabled or has no API key, reverting to default",
-			"agent", name,
-			"model", agent.Model,
-			"provider", provider)
-
-		// Set default model based on available providers
-		if setDefaultModelForAgent(name) {
-			logging.Info("set default model for agent", "agent", name, "model", cfg.Agents[name].Model)
+		apiKey := getProviderAPIKey(provider)
+		if apiKey != "" {
+			// Update provider with API key from environment
+			providerCfg.APIKey = apiKey
+			providerCfg.Disabled = false
+			cfg.Providers[provider] = providerCfg
+			logging.Info("updated provider with API key from environment", "provider", provider)
 		} else {
-			return fmt.Errorf("no valid provider available for agent %s", name)
+			logging.Warn("provider is disabled or has no API key, checking for alternatives",
+				"agent", name,
+				"model", agent.Model,
+				"provider", provider)
+
+			// Only revert to default if we can't find a valid provider
+			if setDefaultModelForAgent(name) {
+				logging.Info("set default model for agent", "agent", name, "model", cfg.Agents[name].Model)
+			} else {
+				logging.Warn("no valid provider available, but keeping configured model",
+					"agent", name,
+					"model", agent.Model)
+				// Don't return an error, just keep the configured model
+			}
 		}
 	}
 
